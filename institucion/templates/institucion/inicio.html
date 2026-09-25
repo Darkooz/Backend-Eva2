@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block contenido %}
+<div class="text-center mt-4 mb-5">
+    <!-- Imagen configurada como banner responsivo -->
+    <img src="{% static 'img/muni.jpg' %}" alt="Fachada Municipalidad" class="img-fluid rounded shadow mb-4" style="width: 100%; max-height: 400px; object-fit: cover;">
+    
+    <h2 class="text-danger fw-bold">Autoridades Comunales (2024-2028)</h2>
+    <p class="lead text-muted">Misión: Entregar a la comunidad un servicio cercano, oportuno y de calidad.</p>
+    
+    <a href="/historia/" class="btn btn-outline-danger mt-2 shadow-sm">
+        Leer Contexto de la Comuna ➡
+    </a>
+</div>
+
+<div class="row mt-4 justify-content-center">
+    <!-- Iteración de los datos leídos desde autoridades.json -->
+    {% for autoridad in autoridades %}
+    <div class="col-md-4 mb-4">
+        <div class="card h-100 border-danger shadow-sm text-center">
+            <div class="card-body d-flex flex-column justify-content-center">
+                <h5 class="card-title text-danger text-uppercase">{{ autoridad.cargo }}</h5>
+                <h6 class="card-subtitle mb-3 text-dark fw-bold fs-5">{{ autoridad.nombre }}</h6>
+                <p class="card-text text-muted small">{{ autoridad.descripcion }}</p>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

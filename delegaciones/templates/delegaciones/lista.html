@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block contenido %}
+<div class="container mt-5">
+    <h2 class="text-center mb-4">Red de Delegaciones Municipales</h2>
+    
+    <!-- Requerimiento de imagen estática de la aplicación -->
+    <div class="text-center mb-5">
+        <img src="{% static 'img/mapa.jpg' %}" alt="Mapa de Delegaciones" class="img-fluid rounded shadow" style="max-width: 600px;">
+    </div>
+
+    <!-- Grilla de Bootstrap para las tarjetas -->
+    <div class="row">
+        {% for delegacion in delegaciones %}
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 shadow-sm border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="card-title mb-0">{{ delegacion.nombre }}</h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text"><strong>Encargado:</strong> {{ delegacion.encargado }}</p>
+                    <p class="card-text"><strong>Dirección:</strong> {{ delegacion.direccion }}</p>
+                    <p class="card-text"><strong>Teléfono:</strong> {{ delegacion.telefono }}</p>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

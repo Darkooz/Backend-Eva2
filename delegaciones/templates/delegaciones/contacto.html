@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+
+{% block contenido %}
+<div class="container mt-5">
+    <h2 class="text-center mb-4">Contacto y Emergencias</h2>
+    <div class="alert alert-info text-center shadow-sm" role="alert">
+        Las delegaciones deben informar a la autoridad sobre situaciones de emergencia y reportar afectaciones en calles o servicios[cite: 2].
+    </div>
+    <div class="text-center mt-4">
+        <a href="/delegaciones/" class="btn btn-primary">Ver Directorio de Delegaciones</a>
+    </div>
+</div>
+<div class="text-center mt-5 mb-4">
+        <!-- Este botón usa history.back() para regresar exactamente a la página anterior -->
+        <button onclick="history.back()" class="btn btn-outline-dark shadow-sm">
+            ⬅ Volver Atrás
+        </button>
+    </div>
+{% endblock %}
