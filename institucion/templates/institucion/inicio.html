@@ -14,17 +14,33 @@
     </a>
 </div>
 
+<!-- Botones de Acción Generales (Requisito de Evaluación) -->
+<div class="d-flex justify-content-center gap-3 mb-4">
+    <a href="#" class="btn btn-success shadow-sm fw-bold">Agregar Autoridad</a>
+    <a href="#" class="btn btn-info text-white shadow-sm fw-bold">Buscar Autoridad</a>
+</div>
+
 <div class="row mt-4 justify-content-center">
-    <!-- Iteración de los datos leídos desde autoridades.json -->
+    <!-- Iteración de los datos leídos desde la Base de Datos (ORM) -->
     {% for autoridad in autoridades %}
     <div class="col-md-4 mb-4">
         <div class="card h-100 border-danger shadow-sm text-center">
             <div class="card-body d-flex flex-column justify-content-center">
                 <h5 class="card-title text-danger text-uppercase">{{ autoridad.cargo }}</h5>
                 <h6 class="card-subtitle mb-3 text-dark fw-bold fs-5">{{ autoridad.nombre }}</h6>
-                <p class="card-text text-muted small">{{ autoridad.descripcion }}</p>
+                <p class="card-text text-muted small mb-4">{{ autoridad.descripcion }}</p>
+                
+                <!-- Botones de acción específicos para cada registro (Requisito de Evaluación) -->
+                <div class="mt-auto">
+                    <a href="#" class="btn btn-warning btn-sm w-100 mb-2 fw-bold text-dark shadow-sm">Modificar</a>
+                    <a href="#" class="btn btn-danger btn-sm w-100 shadow-sm">Eliminar</a>
+                </div>
             </div>
         </div>
+    </div>
+    {% empty %}
+    <div class="col-12 text-center mt-4">
+        <p class="text-muted fw-bold">No hay autoridades registradas en la base de datos.</p>
     </div>
     {% endfor %}
 </div>
