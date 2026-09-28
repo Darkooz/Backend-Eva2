@@ -15,10 +15,11 @@
 </div>
 
 <!-- Botones de Acción Generales (Requisito de Evaluación) -->
-<div class="d-flex justify-content-center gap-3 mb-4">
+<form method="get" class="d-flex justify-content-center gap-2 mb-4">
     <a href="#" class="btn btn-success shadow-sm fw-bold">Agregar Autoridad</a>
-    <a href="#" class="btn btn-info text-white shadow-sm fw-bold">Buscar Autoridad</a>
-</div>
+    <input type="text" name="q" value="{{ q }}" class="form-control w-auto" placeholder="Buscar por nombre o cargo">
+    <button type="submit" class="btn btn-info text-white shadow-sm fw-bold">Buscar Autoridad</button>
+</form>
 
 <div class="row mt-4 justify-content-center">
     <!-- Iteración de los datos leídos desde la Base de Datos (ORM) -->

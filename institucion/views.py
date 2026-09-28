@@ -1,21 +1,18 @@
-import json
-import os
 from django.shortcuts import render
-from .models import Delegacion, Autoridad
+from django.db.models import Q
+from .models import Autoridad
 
-def tu_vista_principal(request):
-
-    lista_autoridades = Autoridad.objects.all()
-
-    context = {
-        'autoridades': lista_autoridades
-    }
-    return render(request, 'institucion/inicio.html', context)
 def inicio(request):
-    ruta = os.path.join(os.path.dirname(__file__), 'autoridades.json')
-    with open(ruta, 'r', encoding='utf-8') as f:
-        datos = json.load(f)
-    return render(request, 'institucion/inicio.html', {'autoridades': datos})
+    q = request.GET.get('q', '')
+    autoridades = Autoridad.objects.select_related('delegacion').order_by('nombre')
+    if q:
+        autoridades = autoridades.filter(
+            Q(nombre__icontains=q) | Q(cargo__icontains=q)
+        )
+    return render(request, 'institucion/inicio.html', {
+        'autoridades': autoridades,
+        'q': q,
+    })
 
 def historia(request):
     return render(request, 'institucion/historia.html')
