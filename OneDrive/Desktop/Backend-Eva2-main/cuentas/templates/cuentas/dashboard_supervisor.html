@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% block titulo %}Panel Supervisor | Municipalidad de La Serena{% endblock %}
+{% block contenido %}
+<div class="p-3 mb-4 bg-primary text-white rounded shadow-sm">
+    <h2 class="h4 mb-0">Panel del Supervisor</h2>
+    <small>Información operacional · {{ user.get_full_name|default:user.username }}</small>
+</div>
+
+{% include 'cuentas/_resumen_estados.html' %}
+
+<div class="row g-3 mb-4">
+    <div class="col-md-4"><a class="btn btn-primary w-100 py-3" href="{% url 'solicitudes:solicitud_list' %}?estado=pendiente">Gestionar solicitudes pendientes</a></div>
+    <div class="col-md-4"><a class="btn btn-outline-primary w-100 py-3" href="{% url 'delegaciones:delegacion_list' %}">Delegaciones</a></div>
+    <div class="col-md-4"><a class="btn btn-outline-primary w-100 py-3" href="{% url 'institucion:autoridad_list' %}">Autoridades</a></div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-4">
+        <div class="card shadow-sm h-100"><div class="card-header bg-primary text-white">Cola de pendientes (más antiguas)</div>
+            <ul class="list-group list-group-flush">
+                {% for s in pendientes %}<li class="list-group-item"><a href="{% url 'solicitudes:solicitud_detail' s.pk %}">#{{ s.pk }} · {{ s.get_tipo_display }}</a>
+                    <div class="small text-muted">{{ s.delegacion.nombre }} · {{ s.fecha_creacion|date:"d/m/Y" }}</div></li>
+                {% empty %}<li class="list-group-item text-muted">No hay solicitudes pendientes.</li>{% endfor %}
+            </ul>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card shadow-sm h-100"><div class="card-header bg-primary text-white">En proceso</div>
+            <ul class="list-group list-group-flush">
+                {% for s in en_proceso %}<li class="list-group-item"><a href="{% url 'solicitudes:solicitud_detail' s.pk %}">#{{ s.pk }} · {{ s.get_tipo_display }}</a>
+                    <div class="small text-muted">{{ s.autoridad.nombre|default:"Sin asignar" }}</div></li>
+                {% empty %}<li class="list-group-item text-muted">Nada en proceso.</li>{% endfor %}
+            </ul>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card shadow-sm h-100"><div class="card-header bg-primary text-white">Carga por delegación</div>
+            <ul class="list-group list-group-flush">
+                {% for d in por_delegacion %}<li class="list-group-item d-flex justify-content-between">{{ d.nombre }}
+                    <span><span class="badge text-bg-warning">{{ d.pendientes }} pend.</span> <span class="badge text-bg-secondary">{{ d.total }} total</span></span></li>
+                {% empty %}<li class="list-group-item text-muted">Sin delegaciones.</li>{% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

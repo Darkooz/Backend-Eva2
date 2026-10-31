@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+
+{% block contenido %}
+<div class="container mt-5">
+    <h2 class="text-center mb-4">Contacto y Emergencias</h2>
+    <div class="alert alert-info text-center shadow-sm" role="alert">
+        Las delegaciones deben informar a la autoridad sobre situaciones de emergencia y reportar afectaciones en calles o servicios.
+    </div>
+    <div class="text-center mt-4">
+        {% if perms.institucion.view_delegacion %}
+            <a href="{% url 'delegaciones:delegacion_list' %}" class="btn btn-primary">Ver Directorio de Delegaciones</a>
+        {% else %}
+            <a href="{% url 'cuentas:login' %}" class="btn btn-primary">Ingresar para ver el directorio</a>
+        {% endif %}
+    </div>
+</div>
+<div class="text-center mt-5 mb-4">
+    <button onclick="history.back()" class="btn btn-outline-dark shadow-sm">⬅ Volver Atrás</button>
+</div>
+{% endblock %}

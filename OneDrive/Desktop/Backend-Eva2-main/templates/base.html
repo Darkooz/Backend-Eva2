@@ -1,0 +1,95 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block titulo %}Municipalidad de La Serena{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/bootstrap.min.css' %}">
+</head>
+<!-- min-vh-100 hace que el body ocupe siempre el 100% de la altura de la pantalla -->
+<body class="bg-light d-flex flex-column min-vh-100">
+
+    <header class="bg-danger p-3 shadow-sm">
+        <div class="container">
+            <a href="{% url 'institucion:inicio' %}" class="text-white text-decoration-none">
+                <h1 class="h3 mb-0">Ilustre Municipalidad de La Serena</h1>
+            </a>
+        </div>
+    </header>
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+        <div class="container">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#menuPrincipal"
+                    aria-controls="menuPrincipal" aria-expanded="false" aria-label="Mostrar menú">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="menuPrincipal">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item"><a class="nav-link {% if request.path == '/' %}active{% endif %}" href="{% url 'institucion:inicio' %}">Inicio</a></li>
+                    <li class="nav-item"><a class="nav-link {% if request.path == '/historia/' %}active{% endif %}" href="{% url 'institucion:historia' %}">La Comuna</a></li>
+                    <li class="nav-item"><a class="nav-link {% if request.path == '/delegaciones/contacto/' %}active{% endif %}" href="{% url 'delegaciones:contacto' %}">Contacto</a></li>
+
+                    {% if user.is_authenticated %}
+                        <li class="nav-item"><a class="nav-link {% if '/cuentas/panel/' in request.path %}active{% endif %}" href="{% url 'cuentas:dashboard' %}">Mi panel</a></li>
+                        {% if perms.institucion.view_delegacion %}
+                            <li class="nav-item"><a class="nav-link {% if request.path|slice:':15' == '/delegaciones/' and request.path != '/delegaciones/contacto/' %}active{% endif %}" href="{% url 'delegaciones:delegacion_list' %}">Delegaciones</a></li>
+                        {% endif %}
+                        {% if perms.institucion.view_autoridad %}
+                            <li class="nav-item"><a class="nav-link {% if '/autoridades/' in request.path %}active{% endif %}" href="{% url 'institucion:autoridad_list' %}">Autoridades</a></li>
+                        {% endif %}
+                        {% if perms.solicitudes.view_solicitud %}
+                            <li class="nav-item"><a class="nav-link {% if '/solicitudes/' in request.path %}active{% endif %}" href="{% url 'solicitudes:solicitud_list' %}">Solicitudes</a></li>
+                        {% endif %}
+                        {% if perms.auth.view_user %}
+                            <li class="nav-item"><a class="nav-link {% if '/cuentas/usuarios/' in request.path %}active{% endif %}" href="{% url 'cuentas:usuario_list' %}">Usuarios</a></li>
+                        {% endif %}
+                    {% endif %}
+                </ul>
+
+                <ul class="navbar-nav">
+                    {% if user.is_authenticated %}
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                {{ user.get_full_name|default:user.username }}
+                                {% if perfil_usuario %}<span class="badge text-bg-{{ color_perfil }} ms-1">{{ perfil_usuario }}</span>{% endif %}
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" href="{% url 'cuentas:dashboard' %}">Mi panel</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <form method="post" action="{% url 'cuentas:logout' %}">
+                                        {% csrf_token %}
+                                        <button type="submit" class="dropdown-item">Cerrar sesión</button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </li>
+                    {% else %}
+                        <li class="nav-item"><a class="btn btn-outline-light btn-sm" href="{% url 'cuentas:login' %}">Ingresar</a></li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- flex-grow-1 empuja automáticamente el footer hacia el fondo -->
+    <main class="container flex-grow-1">
+        {% for mensaje in messages %}
+            <div class="alert alert-{{ mensaje.tags|default:'info' }} alert-dismissible fade show" role="alert">
+                {{ mensaje }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+            </div>
+        {% endfor %}
+        {% block contenido %}
+        {% endblock %}
+    </main>
+
+    <!-- mt-auto asegura que la barra negra se ancle abajo -->
+    <footer class="bg-dark text-white text-center p-3 mt-5">
+        <p class="mb-0">Atendiendo las necesidades de la comunidad local.</p>
+    </footer>
+
+    <script src="{% static 'js/bootstrap.bundle.min.js' %}"></script>
+</body>
+</html>

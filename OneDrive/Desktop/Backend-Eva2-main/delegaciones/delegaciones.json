@@ -1,0 +1,20 @@
+[
+    {
+        "nombre": "Avenida del Mar",
+        "encargado": "Rodrigo Fuenzalida Vásquez",
+        "direccion": "Avenida del Mar 2500",
+        "telefono": "512 206518"
+    },
+    {
+        "nombre": "Las Compañías",
+        "encargado": "Pablo Cuadra Corrales",
+        "direccion": "Esmeralda 2422, Costado Banco Estado",
+        "telefono": "512 206527"
+    },
+    {
+        "nombre": "Centro",
+        "encargado": "Alan Von Kretschmann",
+        "direccion": "Cienfuegos 226",
+        "telefono": "512 207861"
+    }
+]

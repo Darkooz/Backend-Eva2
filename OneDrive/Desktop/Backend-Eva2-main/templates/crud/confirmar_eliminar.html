@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block titulo %}{{ titulo }} | Municipalidad de La Serena{% endblock %}
+{% block contenido %}
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card border-danger shadow-sm">
+            <div class="card-header bg-danger text-white"><h2 class="h5 mb-0">{{ titulo }}</h2></div>
+            <div class="card-body text-center">
+                <p class="lead mb-1">¿Confirma que desea eliminar el siguiente registro?</p>
+                <p class="fs-5 fw-bold">{{ objeto }}</p>
+                <p class="text-muted small">{{ advertencia|default:'Esta acción no se puede deshacer.' }}</p>
+                <form method="post">
+                    {% csrf_token %}
+                    <a href="{{ cancelar_url }}" class="btn btn-outline-secondary me-2">Cancelar</a>
+                    <button type="submit" class="btn btn-danger">Sí, eliminar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
