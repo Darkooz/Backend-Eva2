@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% block titulo %}Acceso denegado | Municipalidad de La Serena{% endblock %}
+{% block contenido %}
+<div class="text-center py-5">
+    <h2 class="display-6 text-danger fw-bold">Acceso denegado</h2>
+    <p class="lead text-muted">Su perfil{% if perfil_usuario %} ({{ perfil_usuario }}){% endif %} no tiene permisos para realizar esta operación.</p>
+    <a href="{% if user.is_authenticated %}{% url 'cuentas:dashboard' %}{% else %}{% url 'institucion:inicio' %}{% endif %}" class="btn btn-outline-dark">Volver</a>
+</div>
+{% endblock %}

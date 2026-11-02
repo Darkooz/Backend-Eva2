@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% block titulo %}Panel Administrador | Municipalidad de La Serena{% endblock %}
+{% block contenido %}
+<div class="p-3 mb-4 bg-danger text-white rounded shadow-sm">
+    <h2 class="h4 mb-0">Panel del Administrador</h2>
+    <small>Acceso total al sistema · {{ user.get_full_name|default:user.username }}</small>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-6 col-lg-3"><div class="card border-danger shadow-sm text-center"><div class="card-body"><div class="display-6 fw-bold text-danger">{{ total_usuarios }}</div>Usuarios</div></div></div>
+    <div class="col-6 col-lg-3"><div class="card border-danger shadow-sm text-center"><div class="card-body"><div class="display-6 fw-bold text-danger">{{ total_delegaciones }}</div>Delegaciones</div></div></div>
+    <div class="col-6 col-lg-3"><div class="card border-danger shadow-sm text-center"><div class="card-body"><div class="display-6 fw-bold text-danger">{{ total_autoridades }}</div>Autoridades</div></div></div>
+    <div class="col-6 col-lg-3"><div class="card border-danger shadow-sm text-center"><div class="card-body"><div class="display-6 fw-bold text-danger">{{ total_solicitudes }}</div>Solicitudes</div></div></div>
+</div>
+
+<h3 class="h5">Solicitudes por estado</h3>
+{% include 'cuentas/_resumen_estados.html' %}
+
+<h3 class="h5">Accesos</h3>
+<div class="row g-3 mb-4">
+    <div class="col-md-6 col-lg-3"><a class="btn btn-dark w-100 py-3" href="{% url 'cuentas:usuario_list' %}">Gestión de usuarios</a></div>
+    <div class="col-md-6 col-lg-3"><a class="btn btn-dark w-100 py-3" href="{% url 'delegaciones:delegacion_list' %}">Mantenedor de Delegaciones</a></div>
+    <div class="col-md-6 col-lg-3"><a class="btn btn-dark w-100 py-3" href="{% url 'institucion:autoridad_list' %}">Mantenedor de Autoridades</a></div>
+    <div class="col-md-6 col-lg-3"><a class="btn btn-dark w-100 py-3" href="{% url 'solicitudes:solicitud_list' %}">Todas las solicitudes</a></div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-4">
+        <div class="card shadow-sm h-100"><div class="card-header bg-dark text-white">Usuarios por perfil</div>
+            <ul class="list-group list-group-flush">
+                {% for p in perfiles %}<li class="list-group-item d-flex justify-content-between">{{ p.name }}<span class="badge text-bg-secondary">{{ p.total }}</span></li>{% endfor %}
+            </ul>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card shadow-sm h-100"><div class="card-header bg-dark text-white">Últimas solicitudes</div>
+            <ul class="list-group list-group-flush">
+                {% for s in ultimas_solicitudes %}
+                <li class="list-group-item"><a href="{% url 'solicitudes:solicitud_detail' s.pk %}">#{{ s.pk }} · {{ s.solicitante_nombre }}</a>
+                    <span class="badge text-bg-{{ s.color_estado }} float-end">{{ s.get_estado_display }}</span><div class="small text-muted">{{ s.delegacion.nombre }}</div></li>
+                {% empty %}<li class="list-group-item text-muted">Sin solicitudes.</li>{% endfor %}
+            </ul>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card shadow-sm h-100"><div class="card-header bg-dark text-white">Últimos movimientos</div>
+            <ul class="list-group list-group-flush">
+                {% for m in ultimos_movimientos %}
+                <li class="list-group-item small">#{{ m.solicitud_id }} → <span class="badge text-bg-{{ m.color_estado }}">{{ m.get_estado_nuevo_display }}</span>
+                    <div class="text-muted">{{ m.fecha|date:"d/m H:i" }} · {{ m.usuario.username|default:"—" }}</div></li>
+                {% empty %}<li class="list-group-item text-muted">Sin movimientos.</li>{% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

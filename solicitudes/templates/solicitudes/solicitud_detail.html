@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% block titulo %}Solicitud #{{ solicitud.pk }} | Municipalidad de La Serena{% endblock %}
+{% block contenido %}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <h2 class="mb-0">Solicitud #{{ solicitud.pk }}
+        <span class="badge text-bg-{{ solicitud.color_estado }} fs-6 align-middle">{{ solicitud.get_estado_display }}</span>
+    </h2>
+    <a href="{% url 'solicitudes:solicitud_list' %}" class="btn btn-outline-secondary">⬅ Volver al listado</a>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-dark text-white">Datos de la solicitud</div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-4">Solicitante</dt><dd class="col-sm-8">{{ solicitud.solicitante_nombre }}</dd>
+                    <dt class="col-sm-4">Contacto</dt>
+                    <dd class="col-sm-8">{{ solicitud.solicitante_email|default:"" }}{% if solicitud.solicitante_email and solicitud.solicitante_telefono %} · {% endif %}{{ solicitud.solicitante_telefono|default:"" }}</dd>
+                    <dt class="col-sm-4">Tipo</dt><dd class="col-sm-8">{{ solicitud.get_tipo_display }}</dd>
+                    <dt class="col-sm-4">Prioridad</dt><dd class="col-sm-8"><span class="badge text-bg-{{ solicitud.color_prioridad }}">{{ solicitud.get_prioridad_display }}</span></dd>
+                    <dt class="col-sm-4">Delegación</dt><dd class="col-sm-8">{{ solicitud.delegacion.nombre }}</dd>
+                    <dt class="col-sm-4">Autoridad asignada</dt><dd class="col-sm-8">{{ solicitud.autoridad|default:"Sin asignar" }}</dd>
+                    <dt class="col-sm-4">Registrada por</dt><dd class="col-sm-8">{{ solicitud.creada_por.get_full_name|default:solicitud.creada_por.username|default:"—" }}</dd>
+                    <dt class="col-sm-4">Fecha</dt><dd class="col-sm-8">{{ solicitud.fecha_creacion|date:"d/m/Y H:i" }}</dd>
+                    <dt class="col-sm-4">Descripción</dt><dd class="col-sm-8">{{ solicitud.descripcion|linebreaksbr }}</dd>
+                </dl>
+            </div>
+        </div>
+
+        <div class="card shadow-sm">
+            <div class="card-header bg-dark text-white">Historial de seguimiento</div>
+            <ul class="list-group list-group-flush">
+                {% for seg in seguimientos %}
+                <li class="list-group-item">
+                    <div class="d-flex justify-content-between flex-wrap">
+                        <span><span class="badge text-bg-{{ seg.color_estado }}">{{ seg.get_estado_nuevo_display }}</span>
+                            {% if seg.autoridad %}<span class="small text-muted ms-2">Asignada a {{ seg.autoridad.nombre }}</span>{% endif %}</span>
+                        <span class="small text-muted">{{ seg.fecha|date:"d/m/Y H:i" }} · {{ seg.usuario.username|default:"usuario eliminado" }}</span>
+                    </div>
+                    {% if seg.comentario %}<div class="small mt-1">{{ seg.comentario }}</div>{% endif %}
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        {% if puede_gestionar %}
+        <div class="card border-primary shadow-sm">
+            <div class="card-header bg-primary text-white">Asignar y cambiar estado</div>
+            <div class="card-body">
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    {% include 'includes/formulario_campos.html' %}
+                    <button type="submit" class="btn btn-primary w-100">Guardar cambios</button>
+                </form>
+            </div>
+        </div>
+        {% elif solicitud.esta_cerrada %}
+        <div class="alert alert-secondary">Esta solicitud está cerrada y no admite modificaciones.</div>
+        {% else %}
+        <div class="alert alert-info">Su perfil solo permite consultar esta solicitud. La asignación y el cambio de estado los realiza un Supervisor o Administrador.</div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

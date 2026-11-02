@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% block titulo %}Página no encontrada | Municipalidad de La Serena{% endblock %}
+{% block contenido %}
+<div class="text-center py-5">
+    <h2 class="display-6 text-danger fw-bold">Página no encontrada</h2>
+    <p class="lead text-muted">La dirección solicitada no existe o el registro fue eliminado.</p>
+    <a href="{% url 'institucion:inicio' %}" class="btn btn-outline-dark">Ir al inicio</a>
+</div>
+{% endblock %}

@@ -1,8 +1,12 @@
 from django.urls import path
-from . import views  
+from . import views
+
+app_name = 'delegaciones'
 
 urlpatterns = [
-    
-    path('', views.lista_delegaciones, name='lista_delegaciones'),
-    path('contacto/', views.contacto_delegaciones, name='contacto_delegaciones'),
+    path('', views.DelegacionListView.as_view(), name='delegacion_list'),
+    path('nueva/', views.DelegacionCreateView.as_view(), name='delegacion_create'),
+    path('<int:pk>/editar/', views.DelegacionUpdateView.as_view(), name='delegacion_update'),
+    path('<int:pk>/eliminar/', views.DelegacionDeleteView.as_view(), name='delegacion_delete'),
+    path('contacto/', views.contacto_delegaciones, name='contacto'),
 ]

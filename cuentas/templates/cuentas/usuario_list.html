@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% block titulo %}Usuarios | Municipalidad de La Serena{% endblock %}
+{% block contenido %}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+    <h2 class="mb-0">Gestión de usuarios y perfiles</h2>
+    {% if perms.auth.add_user %}<a href="{% url 'cuentas:usuario_create' %}" class="btn btn-success fw-bold">+ Nuevo usuario</a>{% endif %}
+</div>
+
+<form method="get" class="input-group mb-3">
+    <input type="text" name="q" value="{{ q }}" class="form-control" placeholder="Buscar por usuario, nombre o correo...">
+    <button class="btn btn-primary" type="submit">Buscar</button>
+    {% if q %}<a class="btn btn-outline-secondary" href="{% url 'cuentas:usuario_list' %}">Limpiar</a>{% endif %}
+</form>
+
+<div class="table-responsive shadow-sm">
+<table class="table table-striped table-hover bg-white align-middle mb-0">
+    <thead class="table-dark">
+        <tr><th>Usuario</th><th>Nombre</th><th>Correo</th><th>Perfil</th><th>Estado</th><th>Último acceso</th><th class="text-end">Acciones</th></tr>
+    </thead>
+    <tbody>
+        {% for u in usuarios %}
+        <tr>
+            <td class="fw-semibold">{{ u.username }}</td>
+            <td>{{ u.get_full_name|default:"—" }}</td>
+            <td>{{ u.email|default:"—" }}</td>
+            <td>
+                {% if u.is_superuser %}<span class="badge text-bg-danger">Administrador (superusuario)</span>{% endif %}
+                {% for g in u.groups.all %}<span class="badge text-bg-secondary">{{ g.name }}</span>{% empty %}{% if not u.is_superuser %}<span class="text-muted small">Sin perfil</span>{% endif %}{% endfor %}
+            </td>
+            <td>{% if u.is_active %}<span class="badge text-bg-success">Activo</span>{% else %}<span class="badge text-bg-dark">Inactivo</span>{% endif %}</td>
+            <td class="small">{{ u.last_login|date:"d/m/Y H:i"|default:"Nunca" }}</td>
+            <td class="text-end text-nowrap">
+                {% if perms.auth.change_user %}<a href="{% url 'cuentas:usuario_update' u.pk %}" class="btn btn-warning btn-sm">Modificar</a>{% endif %}
+                {% if perms.auth.delete_user and u != user %}<a href="{% url 'cuentas:usuario_delete' u.pk %}" class="btn btn-danger btn-sm">Eliminar</a>{% endif %}
+            </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7" class="text-center text-muted py-4">No hay usuarios que coincidan con la búsqueda.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+</div>
+<div class="mt-3">{% include 'includes/paginacion.html' %}</div>
+{% endblock %}

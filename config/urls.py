@@ -1,8 +1,10 @@
-from django.contrib import admin
-from django.urls import path, include  
+from django.urls import path, include
 
+# Django Admin ya no se publica: desde la Eva 3 toda la gestión se realiza
+# mediante interfaces propias (Django Templates + Bootstrap).
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path('cuentas/', include('cuentas.urls')),
     path('delegaciones/', include('delegaciones.urls')),
-    path('', include('institucion.urls')), 
+    path('solicitudes/', include('solicitudes.urls')),
+    path('', include('institucion.urls')),
 ]

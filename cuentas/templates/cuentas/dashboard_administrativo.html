@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block titulo %}Panel Administrativo | Municipalidad de La Serena{% endblock %}
+{% block contenido %}
+<div class="p-3 mb-4 bg-success text-white rounded shadow-sm">
+    <h2 class="h4 mb-0">Panel Administrativo</h2>
+    <small>Funcionalidades asignadas a su perfil · {{ user.get_full_name|default:user.username }}</small>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-4"><a class="btn btn-success w-100 py-3" href="{% url 'solicitudes:solicitud_create' %}">+ Registrar solicitud</a></div>
+    <div class="col-md-4"><a class="btn btn-outline-success w-100 py-3" href="{% url 'solicitudes:solicitud_list' %}">Consultar solicitudes</a></div>
+    <div class="col-md-2"><a class="btn btn-outline-secondary w-100 py-3" href="{% url 'delegaciones:delegacion_list' %}">Delegaciones</a></div>
+    <div class="col-md-2"><a class="btn btn-outline-secondary w-100 py-3" href="{% url 'institucion:autoridad_list' %}">Autoridades</a></div>
+</div>
+
+<div class="alert alert-light border">
+    Su perfil permite <strong>consultar</strong> delegaciones y autoridades y <strong>registrar</strong> solicitudes.
+    Las operaciones críticas (modificar, eliminar, asignar autoridades, gestionar usuarios) están restringidas a Supervisores y Administradores.
+</div>
+
+<div class="row g-4">
+    <div class="col-md-4">
+        <div class="card border-success shadow-sm text-center"><div class="card-body">
+            <div class="display-6 fw-bold text-success">{{ total_mias }}</div>Solicitudes registradas por mí
+            <div class="small text-muted">{{ mis_pendientes }} pendientes</div></div></div>
+    </div>
+    <div class="col-md-8">
+        <div class="card shadow-sm"><div class="card-header bg-success text-white">Mis últimas solicitudes</div>
+            <ul class="list-group list-group-flush">
+                {% for s in mis_solicitudes %}<li class="list-group-item"><a href="{% url 'solicitudes:solicitud_detail' s.pk %}">#{{ s.pk }} · {{ s.solicitante_nombre }}</a>
+                    <span class="badge text-bg-{{ s.color_estado }} float-end">{{ s.get_estado_display }}</span>
+                    <div class="small text-muted">{{ s.delegacion.nombre }} · {{ s.fecha_creacion|date:"d/m/Y H:i" }}</div></li>
+                {% empty %}<li class="list-group-item text-muted">Aún no ha registrado solicitudes.</li>{% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}
