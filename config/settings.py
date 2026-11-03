@@ -105,6 +105,11 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
+# Evidencias subidas por los usuarios. NO se publican por URL directa:
+# se entregan mediante una vista que exige sesión y permisos.
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
 
 # ---------------------------------------------------------------------------
 # Autenticación (Eva 3)

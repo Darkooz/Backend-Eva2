@@ -4,20 +4,32 @@ from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import Count
 
-from .models import COLORES_ESTADO, SeguimientoSolicitud, Solicitud
+from .models import COLORES_ESTADO, AdjuntoSeguimiento, SeguimientoSolicitud, Solicitud
 
 
 @transaction.atomic
 def registrar_solicitud(form, usuario):
-    """Crea la solicitud (estado Pendiente) y su primer seguimiento."""
+    """Crea la solicitud (estado Pendiente), su primer seguimiento y las evidencias adjuntas."""
     solicitud = form.save(commit=False)
     solicitud.creada_por = usuario
     solicitud.estado = Solicitud.Estado.PENDIENTE
     solicitud.save()
-    SeguimientoSolicitud.objects.create(
+    seguimiento = SeguimientoSolicitud.objects.create(
         solicitud=solicitud, estado_anterior='', estado_nuevo=Solicitud.Estado.PENDIENTE,
         comentario='Solicitud registrada.', usuario=usuario,
     )
+    guardados = []
+    try:
+        for archivo in form.cleaned_data.get('evidencias') or []:
+            guardados.append(AdjuntoSeguimiento.objects.create(
+                seguimiento=seguimiento, archivo=archivo, nombre_original=archivo.name[:150],
+                tipo=archivo.tipo_detectado, tamano=archivo.size, subido_por=usuario,
+            ))
+    except Exception:
+        # Si algo falla, la transacción se revierte: se limpian también los archivos ya escritos
+        for adjunto in guardados:
+            adjunto.archivo.delete(save=False)
+        raise
     return solicitud
 
 

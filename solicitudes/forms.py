@@ -3,11 +3,34 @@ from django import forms
 from config.bootstrap import BootstrapFormMixin
 from institucion.forms import validar_telefono
 from institucion.models import Autoridad, Delegacion
+from .archivos import MAX_ARCHIVOS, MAX_BYTES, validar_evidencia
 from .models import Solicitud
+
+
+class MultipleFileInput(forms.ClearableFileInput):
+    allow_multiple_selected = True
+
+
+class MultipleFileField(forms.FileField):
+    """Campo que acepta varios archivos a la vez."""
+
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault('widget', MultipleFileInput(attrs={'accept': '.pdf,.jpg,.jpeg,.png'}))
+        super().__init__(*args, **kwargs)
+
+    def clean(self, data, initial=None):
+        limpiar = super().clean
+        if isinstance(data, (list, tuple)):
+            return [limpiar(d, initial) for d in data if d]
+        return [limpiar(data, initial)] if data else []
 
 
 class SolicitudForm(BootstrapFormMixin, forms.ModelForm):
     """Formulario de registro de una solicitud ciudadana."""
+    evidencias = MultipleFileField(
+        label='Evidencias (opcional)', required=False,
+        help_text=f'PDF, JPG o PNG. Máximo {MAX_ARCHIVOS} archivos de {MAX_BYTES // (1024 * 1024)} MB cada uno.',
+    )
 
     class Meta:
         model = Solicitud
@@ -29,6 +52,20 @@ class SolicitudForm(BootstrapFormMixin, forms.ModelForm):
 
     def clean_solicitante_telefono(self):
         return validar_telefono(self.cleaned_data.get('solicitante_telefono'))
+
+    def clean_evidencias(self):
+        archivos = self.cleaned_data.get('evidencias') or []
+        if len(archivos) > MAX_ARCHIVOS:
+            raise forms.ValidationError(f'Puede adjuntar como máximo {MAX_ARCHIVOS} archivos.')
+        errores = []
+        for archivo in archivos:
+            try:
+                archivo.tipo_detectado = validar_evidencia(archivo)
+            except forms.ValidationError as error:
+                errores.extend(error.messages)
+        if errores:
+            raise forms.ValidationError(errores)
+        return archivos
 
     def clean_descripcion(self):
         descripcion = self.cleaned_data['descripcion'].strip()

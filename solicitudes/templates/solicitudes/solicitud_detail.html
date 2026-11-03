@@ -39,6 +39,22 @@
                         <span class="small text-muted">{{ seg.fecha|date:"d/m/Y H:i" }} · {{ seg.usuario.username|default:"usuario eliminado" }}</span>
                     </div>
                     {% if seg.comentario %}<div class="small mt-1">{{ seg.comentario }}</div>{% endif %}
+                    {% if seg.adjuntos.all %}
+                    <div class="mt-2 d-flex flex-wrap gap-3 align-items-end">
+                        {% for a in seg.adjuntos.all %}
+                            {% if a.es_imagen %}
+                                <a href="{% url 'solicitudes:adjunto_descargar' a.pk %}" target="_blank" class="text-decoration-none text-center">
+                                    <img src="{% url 'solicitudes:adjunto_descargar' a.pk %}" alt="{{ a.nombre_original }}" class="img-thumbnail" style="max-height: 90px;">
+                                    <div class="small text-muted">{{ a.nombre_original|truncatechars:22 }}</div>
+                                </a>
+                            {% else %}
+                                <a href="{% url 'solicitudes:adjunto_descargar' a.pk %}" target="_blank" class="btn btn-outline-secondary btn-sm">
+                                    📄 {{ a.nombre_original|truncatechars:28 }} <span class="text-muted">({{ a.tamano_legible }})</span>
+                                </a>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                    {% endif %}
                 </li>
                 {% endfor %}
             </ul>

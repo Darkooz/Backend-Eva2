@@ -1,14 +1,16 @@
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
+from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied, ValidationError
-from django.shortcuts import redirect
+from django.http import FileResponse, Http404
+from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy
 from django.views.generic import CreateView, DeleteView, DetailView, ListView
 
 from config.mixins import BuscadorMixin, EliminarSeguroMixin
 from institucion.models import Delegacion
 from .forms import GestionSolicitudForm, SolicitudForm
-from .models import Solicitud
+from .models import AdjuntoSeguimiento, Solicitud
 from .services import gestionar_solicitud, registrar_solicitud
 
 
@@ -73,7 +75,7 @@ class SolicitudDetailView(SolicitudBase, DetailView):
 
     def get_context_data(self, form=None, **kwargs):
         contexto = super().get_context_data(**kwargs)
-        contexto['seguimientos'] = self.object.seguimientos.select_related('usuario', 'autoridad')
+        contexto['seguimientos'] = self.object.seguimientos.select_related('usuario', 'autoridad').prefetch_related('adjuntos')
         contexto['puede_gestionar'] = self._puede_gestionar()
         if contexto['puede_gestionar']:
             contexto['form'] = form or GestionSolicitudForm(solicitud=self.object)
@@ -112,3 +114,17 @@ class SolicitudDeleteView(SolicitudBase, EliminarSeguroMixin, DeleteView):
         'cancelar_url': reverse_lazy('solicitudes:solicitud_list'),
         'advertencia': 'También se eliminará todo su historial de seguimiento.',
     }
+
+
+@login_required
+def adjunto_descargar(request, pk):
+    """Entrega una evidencia solo a usuarios con sesión y permiso para ver solicitudes."""
+    if not request.user.has_perm('solicitudes.view_solicitud'):
+        raise PermissionDenied
+    adjunto = get_object_or_404(AdjuntoSeguimiento, pk=pk)
+    try:
+        archivo = adjunto.archivo.open('rb')
+    except FileNotFoundError:
+        raise Http404('El archivo ya no está disponible.')
+    return FileResponse(archivo, content_type=adjunto.tipo, as_attachment=False,
+                        filename=adjunto.nombre_original)

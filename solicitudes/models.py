@@ -1,5 +1,11 @@
+import os
+import uuid
+
 from django.conf import settings
 from django.db import models
+from django.db.models.signals import post_delete
+from django.dispatch import receiver
+from django.utils import timezone
 
 COLORES_ESTADO = {
     'pendiente': 'warning',
@@ -121,3 +127,48 @@ class SeguimientoSolicitud(models.Model):
     @property
     def color_estado(self):
         return COLORES_ESTADO.get(self.estado_nuevo, 'secondary')
+
+
+def ruta_evidencia(instance, filename):
+    """Guarda el archivo con un nombre aleatorio (nunca con el que envía el usuario)."""
+    extension = os.path.splitext(filename)[1].lower()
+    return f'evidencias/{timezone.now():%Y/%m}/{uuid.uuid4().hex}{extension}'
+
+
+class AdjuntoSeguimiento(models.Model):
+    """Evidencia (PDF o imagen) asociada a un movimiento del historial de una solicitud."""
+    seguimiento = models.ForeignKey(SeguimientoSolicitud, on_delete=models.CASCADE, related_name='adjuntos')
+    archivo = models.FileField(upload_to=ruta_evidencia)
+    nombre_original = models.CharField(max_length=150)
+    tipo = models.CharField(max_length=50)
+    tamano = models.PositiveIntegerField('Tamaño (bytes)')
+    subido_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='adjuntos_subidos',
+    )
+    fecha = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['fecha', 'id']
+        verbose_name = 'adjunto de seguimiento'
+        verbose_name_plural = 'adjuntos de seguimiento'
+
+    def __str__(self):
+        return self.nombre_original
+
+    @property
+    def es_imagen(self):
+        return self.tipo.startswith('image/')
+
+    @property
+    def tamano_legible(self):
+        if self.tamano < 1024 * 1024:
+            return f'{max(1, self.tamano // 1024)} KB'
+        return f'{self.tamano / (1024 * 1024):.1f} MB'
+
+
+@receiver(post_delete, sender=AdjuntoSeguimiento)
+def borrar_archivo_del_disco(sender, instance, **kwargs):
+    """Al eliminar el registro (o la solicitud completa) también se elimina el archivo físico."""
+    if instance.archivo:
+        instance.archivo.delete(save=False)

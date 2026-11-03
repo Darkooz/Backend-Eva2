@@ -1,10 +1,16 @@
-from django.test import TestCase
+import shutil
+import tempfile
+from pathlib import Path
+
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from cuentas.perfiles import ADMINISTRADOR, ADMINISTRATIVO, SUPERVISOR
 from cuentas.testing import CLAVE, crear_usuario
 from institucion.models import Autoridad, Delegacion
-from .models import SeguimientoSolicitud, Solicitud
+from .archivos import MAX_BYTES
+from .models import AdjuntoSeguimiento, SeguimientoSolicitud, Solicitud
 
 E = Solicitud.Estado
 
@@ -108,3 +114,105 @@ class TransaccionTests(TestCase):
             self.assertContains(r, 'Centro')  # delegación de la solicitud visible en cada panel
             if usuario != 'supervisor':
                 self.assertContains(r, 'María López')
+
+
+PDF = b'%PDF-1.4\n1 0 obj\n<<>>\nendobj\ntrailer\n<<>>\n%%EOF'
+PNG = b'\x89PNG\r\n\x1a\n' + b'\x00' * 40
+JPG = b'\xff\xd8\xff\xe0' + b'\x00' * 40
+
+_MEDIA = tempfile.mkdtemp()
+
+
+@override_settings(MEDIA_ROOT=_MEDIA)
+class EvidenciasTests(TestCase):
+    @classmethod
+    def tearDownClass(cls):
+        super().tearDownClass()
+        shutil.rmtree(_MEDIA, ignore_errors=True)
+
+    def setUp(self):
+        crear_usuario(ADMINISTRADOR)
+        crear_usuario(ADMINISTRATIVO)
+        self.delegacion = Delegacion.objects.create(nombre='Centro', direccion='Cienfuegos 226')
+        self.datos = {'solicitante_nombre': 'María López', 'solicitante_email': 'maria@correo.cl',
+                      'tipo': 'alumbrado', 'prioridad': 'alta', 'delegacion': self.delegacion.pk,
+                      'descripcion': 'Poste sin luz hace una semana en la esquina.'}
+        self.client.login(username='administrativo', password=CLAVE)
+        self.url = reverse('solicitudes:solicitud_create')
+
+    def _post(self, *archivos):
+        return self.client.post(self.url, dict(self.datos, evidencias=list(archivos)))
+
+    def test_registro_con_pdf_y_imagen(self):
+        r = self._post(SimpleUploadedFile('informe.pdf', PDF), SimpleUploadedFile('foto.png', PNG))
+        s = Solicitud.objects.get()
+        self.assertRedirects(r, reverse('solicitudes:solicitud_detail', args=[s.pk]))
+        adjuntos = AdjuntoSeguimiento.objects.all()
+        self.assertEqual(adjuntos.count(), 2)
+        primero = s.seguimientos.first()
+        self.assertEqual(set(a.seguimiento for a in adjuntos), {primero})
+        self.assertEqual({a.tipo for a in adjuntos}, {'application/pdf', 'image/png'})
+        for a in adjuntos:
+            self.assertTrue(Path(a.archivo.path).exists())
+            self.assertNotIn(a.nombre_original.split('.')[0], a.archivo.name)  # nombre aleatorio
+        self.assertContains(self.client.get(reverse('solicitudes:solicitud_detail', args=[s.pk])), 'informe.pdf')
+
+    def test_sin_evidencias_sigue_funcionando(self):
+        self._post()
+        self.assertEqual(Solicitud.objects.count(), 1)
+        self.assertEqual(AdjuntoSeguimiento.objects.count(), 0)
+
+    def test_rechaza_extension_no_permitida(self):
+        r = self._post(SimpleUploadedFile('virus.exe', b'MZ' + b'0' * 20))
+        self.assertContains(r, 'formato no permitido')
+        self.assertEqual(Solicitud.objects.count(), 0)
+
+    def test_rechaza_contenido_falso(self):
+        r = self._post(SimpleUploadedFile('falso.pdf', b'esto no es un pdf'))
+        self.assertContains(r, 'no corresponde a un archivo PDF')
+        r = self._post(SimpleUploadedFile('truco.png', PDF))
+        self.assertContains(r, 'no corresponde a un archivo PNG')
+        self.assertEqual(Solicitud.objects.count(), 0)
+
+    def test_rechaza_archivo_muy_grande_y_vacio(self):
+        r = self._post(SimpleUploadedFile('grande.pdf', PDF + b'0' * MAX_BYTES))
+        self.assertContains(r, 'supera el máximo')
+        r = self._post(SimpleUploadedFile('vacio.png', b''))
+        self.assertEqual(Solicitud.objects.count(), 0)
+
+    def test_rechaza_demasiados_archivos(self):
+        archivos = [SimpleUploadedFile(f'f{i}.jpg', JPG) for i in range(6)]
+        r = self._post(*archivos)
+        self.assertContains(r, 'como máximo 5 archivos')
+        self.assertEqual(Solicitud.objects.count(), 0)
+
+    def test_descarga_requiere_sesion(self):
+        self._post(SimpleUploadedFile('informe.pdf', PDF))
+        a = AdjuntoSeguimiento.objects.get()
+        url = reverse('solicitudes:adjunto_descargar', args=[a.pk])
+        r = self.client.get(url)
+        self.assertEqual(r.status_code, 200)
+        self.assertEqual(r['Content-Type'], 'application/pdf')
+        self.assertEqual(b''.join(r.streaming_content), PDF)
+        self.client.logout()
+        r = self.client.get(url)
+        self.assertEqual(r.status_code, 302)
+        self.assertIn(reverse('cuentas:login'), r.url)
+
+    def test_usuario_sin_permiso_no_descarga(self):
+        self._post(SimpleUploadedFile('informe.pdf', PDF))
+        a = AdjuntoSeguimiento.objects.get()
+        from django.contrib.auth import get_user_model
+        get_user_model().objects.create_user('sinperfil', password=CLAVE)
+        self.client.login(username='sinperfil', password=CLAVE)
+        self.assertEqual(self.client.get(reverse('solicitudes:adjunto_descargar', args=[a.pk])).status_code, 403)
+
+    def test_eliminar_solicitud_borra_los_archivos(self):
+        self._post(SimpleUploadedFile('informe.pdf', PDF), SimpleUploadedFile('foto.jpg', JPG))
+        rutas = [Path(a.archivo.path) for a in AdjuntoSeguimiento.objects.all()]
+        self.assertTrue(all(r.exists() for r in rutas))
+        s = Solicitud.objects.get()
+        self.client.login(username='administrador', password=CLAVE)
+        self.client.post(reverse('solicitudes:solicitud_delete', args=[s.pk]))
+        self.assertEqual(AdjuntoSeguimiento.objects.count(), 0)
+        self.assertFalse(any(r.exists() for r in rutas))
