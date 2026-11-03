@@ -101,3 +101,5 @@ DB_ENGINE=django.db.backends.sqlite3 python manage.py test
 
 40 pruebas cubren login/logout, restricciones por perfil, gestión de usuarios, flujo completo de recuperación de contraseña,
 CRUD de ambos mantenedores y la transacción de solicitudes.
+
+IP PUBLICA: *98.87.239.168*
